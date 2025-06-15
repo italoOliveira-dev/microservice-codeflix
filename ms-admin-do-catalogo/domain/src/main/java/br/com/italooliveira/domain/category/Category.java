@@ -1,6 +1,7 @@
 package br.com.italooliveira.domain.category;
 
 import br.com.italooliveira.domain.AggregateRoot;
+import br.com.italooliveira.domain.validation.ValidationHandler;
 
 import java.time.Instant;
 
@@ -33,7 +34,32 @@ public class Category extends AggregateRoot<CategoryId> {
 
     public static Category newCategory(final String name,  final String description, final Boolean active) {
         final var id = CategoryId.unique();
-        return new Category(id, name, description, active, Instant.now(), Instant.now(), null);
+        final var now = Instant.now();
+        final var deletedAt = active ? null : now;
+        return new Category(id, name, description, active, now, now, deletedAt);
+    }
+
+    @Override
+    public void validate(final ValidationHandler handler) {
+        new CategoryValidator(this, handler).validate();
+    }
+
+    public Category activate() {
+        this.deletedAt = null;
+        this.active = true;
+        this.updatedAt = Instant.now();
+        return this;
+    }
+
+    public Category deactivate() {
+
+        if (getDeletedAt() == null) {
+            this.deletedAt = Instant.now();
+        }
+
+        this.active = false;
+        this.updatedAt = Instant.now();
+        return this;
     }
 
     @Override
